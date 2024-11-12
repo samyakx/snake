@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            color: #333;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            border: 2px solid #333;
+            background-color: #fff;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .row {
+            display: flex;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .dark-mode {
+            background-color: #333;
+            color: #f0f0f0;
+        }
+
+        .dark-mode canvas {
+            background-color: #444;
+        }
+
+        .dark-mode button {
+            background-color: #555;
+            color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Snake Game</h1>
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <div class="controls">
+        <div class="row">
+            <button id="up">↑</button>
+        </div>
+        <div class="row">
+            <button id="left">←</button>
+            <button id="down">↓</button>
+            <button id="right">→</button>
+        </div>
+        <button id="toggle">Toggle Dark Mode</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const box = 20;
+        let snake = [{ x: 9 * box, y: 9 * box }];
+        let direction = '';
+        let food = generateFood();
+        let score = 0;
+
+        document.getElementById('up').addEventListener('click', () => setDirection('up'));
+        document.getElementById('left').addEventListener('click', () => setDirection('left'));
+        document.getElementById('down').addEventListener('click', () => setDirection('down'));
+        document.getElementById('right').addEventListener('click', () => setDirection('right'));
+        document.getElementById('toggle').addEventListener('click', toggleDarkMode);
+
+        // Keyboard controls
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp') setDirection('up');
+            if (event.key === 'ArrowDown') setDirection('down');
+            if (event.key === 'ArrowLeft') setDirection('left');
+            if (event.key === 'ArrowRight') setDirection('right');
+        });
+
+        function setDirection(dir) {
+            if (dir === 'up' && direction !== 'down') direction = 'up';
+            if (dir === 'down' && direction !== 'up') direction = 'down';
+            if (dir === 'left' && direction !== 'right') direction = 'left';
+            if (dir === 'right' && direction !== 'left') direction = 'right';
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        function generateFood() {
+            const x = Math.floor(Math.random() * (canvas.width / box)) * box;
+            const y = Math.floor(Math.random() * (canvas.height / box)) * box;
+            return { x, y };
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw food
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x, food.y, box, box);
+
+            // Draw snake
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i === 0) ? 'green' : 'lightgreen';
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeStyle = 'darkgreen';
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            // Move snake
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if (direction === 'up') snakeY -= box;
+            if (direction === 'down') snakeY += box;
+            if (direction === 'left') snakeX -= box;
+            if (direction === 'right') snakeX += box;
+
+            // Loop edges
+            if (snakeX < 0) snakeX = canvas.width - box;
+            if (snakeX >= canvas.width) snakeX = 0;
+            if (snakeY < 0) snakeY = canvas.height - box;
+            if (snakeY >= canvas.height) snakeY = 0;
+
+            // Check for food collision
+            if (snakeX === food.x && snakeY === food.y) {
+                score++;
+                food = generateFood();
+            } else {
+                snake.pop();
+            }
+
+            // Add new head
+            const newHead = { x: snakeX, y: snakeY };
+
+            // Check for collision with self
+            if (collision(newHead, snake)) {
+                clearInterval(game);
+                alert('Game Over! Your score: ' + score);
+                document.location.reload();
+            }
+
+            snake.unshift(newHead);
+        }
+
+        function collision(head, array) {
+            for (let i = 0; i < array.length; i++) {
+                if (head.x === array[i].x && head.y === array[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const game = setInterval(draw, 100);
+    </script>
+</body>
+</html>
